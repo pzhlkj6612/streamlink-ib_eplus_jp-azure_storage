@@ -96,4 +96,4 @@ RUN mkdir '/YTDLP'
 
 COPY --chown=0:0 --chmod=700 ./script.sh /script.sh
 
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/script.sh" ]
