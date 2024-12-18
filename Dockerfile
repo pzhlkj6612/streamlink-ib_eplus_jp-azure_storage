@@ -68,7 +68,7 @@ RUN mkdir -p '/opt/tools/bin' && \
 ARG BENTO4_BUILD_DIR
 COPY --from='bento4-building' ${BENTO4_BUILD_DIR}/mp4decrypt '/opt/tools/bin/mp4decrypt'
 
-COPY --from='bento4-building' /opt/yt-dlp '/opt/tools/bin/yt-dlp'
+COPY --from='bento4-building' '/opt/yt-dlp' '/opt/tools/bin/yt-dlp'
 
 # git - How to shallow clone a specific commit with depth 1? - Stack Overflow
 #   https://stackoverflow.com/a/43136160
