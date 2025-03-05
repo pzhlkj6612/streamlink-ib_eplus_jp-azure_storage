@@ -68,7 +68,6 @@ if [[ -n "${HTTPS_PROXY}" ]]; then
 fi
 
 n_m3u8dl_re_record_stdout_no_url_no_format_partial_command=(
-    'RE_LIVE_PIPE_OPTIONS=" -f flv -flvflags no_duration_filesize"'
     'N_m3u8DL-RE'
         '--live-pipe-mux'
         '--no-ansi-color'
@@ -204,15 +203,21 @@ function process_stream_and_video() {
         "${ytdlp_record_stdout_command[@]}" &
 
     elif [[ -n "${N_m3u8DL_RE_STREAM_URL}" ]]; then
-        # yt-dlp --(.ts)-> pipe
+        # N_3u8DL_RE --(.ts)-> pipe
 
         n_m3u8dl_re_record_stdout_command=(
             "${n_m3u8dl_re_record_stdout_no_url_no_format_partial_command[@]}"
             "${N_m3u8DL_RE_STREAM_URL}"
         )
+        
+        RAW_RE_LIVE_PIPE_OPTIONS=" -f flv -flvflags no_duration_filesize "
 
-        1>"${in_pipe}" \
-        "${n_m3u8dl_re_record_stdout_command[@]}" &
+        if [[ -n "${N_m3u8DL_RE_FFMPEG_OPTIONS}" ]]; then
+            RAW_RE_LIVE_PIPE_OPTIONS="${N_m3u8DL_RE_FFMPEG_OPTIONS}"
+        fi
+
+        RE_LIVE_PIPE_OPTIONS="${RAW_RE_LIVE_PIPE_OPTIONS} ${in_pipe}" \
+            "${n_m3u8dl_re_record_stdout_command[@]}" &
 
     elif [[ -n "${VIDEO_FILE_URL}" ]]; then
         # curl -> pipe
