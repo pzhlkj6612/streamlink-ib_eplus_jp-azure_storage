@@ -68,7 +68,6 @@ if [[ -n "${HTTPS_PROXY}" ]]; then
 fi
 
 n_m3u8dl_re_record_stdout_no_url_no_format_partial_command=(
-    'RE_LIVE_PIPE_OPTIONS=" -f flv -flvflags no_duration_filesize"'
     'N_m3u8DL-RE'
         '--live-pipe-mux'
         '--no-ansi-color'
@@ -170,7 +169,8 @@ function process_stream_and_video() {
     # Prepare input
 
     in_pipe="$(mktemp -u)"
-    mkfifo --mode=600 "${in_pipe}"
+    mkfifo "${in_pipe}"
+    chmod 600 "${in_pipe}"
 
     if [[ -n "${USE_EXISTING_MPEG_TS_VIDEO_FILE}" ]]; then
         # (.ts)-> pipe
@@ -203,15 +203,21 @@ function process_stream_and_video() {
         "${ytdlp_record_stdout_command[@]}" &
 
     elif [[ -n "${N_m3u8DL_RE_STREAM_URL}" ]]; then
-        # yt-dlp --(.ts)-> pipe
+        # N_3u8DL_RE --(.ts)-> pipe
 
         n_m3u8dl_re_record_stdout_command=(
             "${n_m3u8dl_re_record_stdout_no_url_no_format_partial_command[@]}"
             "${N_m3u8DL_RE_STREAM_URL}"
         )
+        
+        RAW_RE_LIVE_PIPE_OPTIONS=" -f flv -flvflags no_duration_filesize "
 
-        1>"${in_pipe}" \
-        "${n_m3u8dl_re_record_stdout_command[@]}" &
+        if [[ -n "${N_m3u8DL_RE_FFMPEG_OPTIONS}" ]]; then
+            RAW_RE_LIVE_PIPE_OPTIONS="${N_m3u8DL_RE_FFMPEG_OPTIONS}"
+        fi
+
+        RE_LIVE_PIPE_OPTIONS="${RAW_RE_LIVE_PIPE_OPTIONS} ${in_pipe}" \
+            "${n_m3u8dl_re_record_stdout_command[@]}" &
 
     elif [[ -n "${VIDEO_FILE_URL}" ]]; then
         # curl -> pipe
@@ -256,7 +262,8 @@ function process_stream_and_video() {
         fi
 
         copy_ts_pipe="$(mktemp -u)"
-        mkfifo --mode=600 "${copy_ts_pipe}"
+        mkfifo "${copy_ts_pipe}"
+        chmod 600 "${copy_ts_pipe}"
 
         0<"${copy_ts_pipe}" \
         1>"${1}" \
@@ -275,7 +282,8 @@ function process_stream_and_video() {
         )
 
         rtmp_ts_pipe="$(mktemp -u)"
-        mkfifo --mode=600 "${rtmp_ts_pipe}"
+        mkfifo "${rtmp_ts_pipe}"
+        chmod 600 "${rtmp_ts_pipe}"
 
         0<"${rtmp_ts_pipe}" \
         "${ffmpeg_stdin_stream_transcode_flv_rtmp_command[@]}" &
@@ -490,7 +498,7 @@ function obtain_calculate_rename_upload() {
 # ENTRYPOINT #
 
 function main() {
-    output_file_basename="${OUTPUT_FILENAME_BASE:-$(mktemp -u 'XXX')}"
+    output_file_basename="${OUTPUT_FILENAME_BASE:-$(mktemp -u 'XXXXXX')}"
 
     if [[ -z "${NO_AUTO_PREFIX_DATETIME}" ]]; then
         output_file_basename="${the_datetime}.${output_file_basename}"
