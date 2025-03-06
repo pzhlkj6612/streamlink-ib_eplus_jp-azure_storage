@@ -67,14 +67,17 @@ if [[ -n "${HTTPS_PROXY}" ]]; then
     )
 fi
 
+INNER_N_m3u8DL_RE_OPTIONS='--log-level DEBUG'
+if [[ -n "${N_m3u8DL_RE_OPTIONS}" ]]; then
+    INNER_N_m3u8DL_RE_OPTIONS="${N_m3u8DL_RE_OPTIONS}"
+fi
+
 n_m3u8dl_re_record_stdout_no_url_no_format_partial_command=(
-    'RE_LIVE_PIPE_OPTIONS=" -f flv -flvflags no_duration_filesize"'
     'N_m3u8DL-RE'
         '--live-pipe-mux'
         '--no-ansi-color'
         '--auto-select'
-        '--log-level' 'DEBUG'
-        ${N_m3u8DL_RE_OPTIONS}
+        ${INNER_N_m3u8DL_RE_OPTIONS}
         # 'URL'
 )
 
@@ -216,7 +219,7 @@ function process_stream_and_video() {
             RAW_RE_LIVE_PIPE_OPTIONS="${N_m3u8DL_RE_FFMPEG_OPTIONS}"
         fi
 
-        RE_LIVE_PIPE_OPTIONS="${RAW_RE_LIVE_PIPE_OPTIONS} ${in_pipe}" \
+        RE_LIVE_PIPE_OPTIONS=" ${RAW_RE_LIVE_PIPE_OPTIONS} ${in_pipe}" \
             "${n_m3u8dl_re_record_stdout_command[@]}" &
 
     elif [[ -n "${VIDEO_FILE_URL}" ]]; then

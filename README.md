@@ -131,6 +131,12 @@ services:
     volumes:
       - ./SL-downloads:/SL-downloads:rw
       - ./YTDLP:/YTDLP:rw  # edit "cookies.txt" in it
+    cap_add:                   #################
+      - SYS_ADMIN              ##             ##
+    devices:                   ##  streamlink ##
+      - /dev/fuse              ##   appimage  ##
+    security_opt:              ##             ##
+      - apparmor:unconfined    #################
     environment:
       # base file name; will use a random one if leaving empty.
       - OUTPUT_FILENAME_BASE=
