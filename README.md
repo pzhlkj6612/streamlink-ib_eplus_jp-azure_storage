@@ -163,6 +163,9 @@ services:
       # N_m3u8DL-RE
       - N_m3u8DL_RE_STREAM_URL=      # enable N_m3u8DL-RE.
       - N_m3u8DL_RE_OPTIONS=         # options passed into N_m3u8DL-RE after default ones; see https://github.com/nilaoda/N_m3u8DL-RE
+      - N_m3u8DL_RE_FFMPEG_OPTIONS=  # set environment variable for RE_LIVE_PIPE_OPTIONS, for more details: https://github.com/nilaoda/N_m3u8DL-RE/blob/30499f5f87e9470e051036946c95620f0774a0d2/src/N_m3u8DL-RE/Util/PipeUtil.cs#L49C63-L49C83
+                                     # the default value is: " -f flv -flvflags no_duration_filesize ", output pipe is handled inside
+                                     # if you wan't exclude some stream, for example, you can set " -map -0:d -c copy -f flv " to exclude data stream
 
       # direct download
       - VIDEO_FILE_URL=  # download a video file.
