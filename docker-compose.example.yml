@@ -4,7 +4,7 @@ services:
     restart: on-failure
     image: ghcr.io/pzhlkj6612/streamlink-eplus_jp-object_storage:unstable
     cap_add:                #################
-      - SYS_ADMIN           ##             ##
+      - SYS_ADMIN           ##do not delete##
     devices:                ##  streamlink ##
       - /dev/fuse           ##   appimage  ##
     security_opt:           ##             ##
@@ -23,9 +23,9 @@ services:
       - RTMP_TARGET_URL=rtmp://<VALID-RTMP-URL>
       - NO_DOWNLOAD_TS=1
     volumes:
-      - ./ytb.txt:/YTDLP/cookies.txt
+      - ./ytb.txt:/opt/config/cookies.txt
       - ./yt-dlp:/opt/tools/bin/yt-dlp
       - ./streamlink.appimage:/opt/tools/bin/streamlink
       - ./n_m3u8DL_RE:/opt/tools/bin/n_m3u8DL_RE
-      - ./stremalink-plugins:/SL-plugins
-      - ./downloads:/SL-downloads
+      - ./stremalink-plugins:/opt/config/SL-plugins
+      - ./downloads:/opt/downloads

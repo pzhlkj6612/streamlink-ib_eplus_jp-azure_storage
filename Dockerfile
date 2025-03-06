@@ -1,5 +1,6 @@
 ARG BENTO4_BUILD_DIR=/tmp/cmakebuild
 ARG TOOLS_DIR=/opt/tools
+ARG CONFIG_DIR=/opt/config
 
 FROM python:3.13.1-slim-bookworm AS builder
 
@@ -24,16 +25,26 @@ RUN curl -L 'https://github.com/axiomatic-systems/Bento4/archive/f8ce9a93de14972
     make mp4decrypt -j2 && \
     cp "${BENTO4_BUILD_DIR}/mp4decrypt" "${TOOLS_DIR}/bin/mp4decrypt"
 
-# yt-dlp builder
-RUN mkdir 'yt-dlp' && \
-    curl -L "https://github.com/yt-dlp/yt-dlp/archive/refs/tags/2024.12.13.tar.gz" | \
-        tar -C 'yt-dlp' -f- -x --gzip --strip-components=1 && \
-    cd 'yt-dlp' && \
-    python3 -m venv .venv-yt-dlp && . .venv-yt-dlp/bin/activate && \
-    python3 devscripts/install_deps.py --include pyinstaller && \
-    python3 devscripts/make_lazy_extractors.py && \
-    python3 -m bundle.pyinstaller && \
-    cp 'dist/yt-dlp_linux' "${TOOLS_DIR}/bin/yt-dlp"
+# # yt-dlp builder
+# RUN mkdir 'yt-dlp' && \
+#     curl -L "https://github.com/yt-dlp/yt-dlp/archive/refs/tags/2024.12.13.tar.gz" | \
+#         tar -C 'yt-dlp' -f- -x --gzip --strip-components=1 && \
+#     cd 'yt-dlp' && \
+#     python3 -m venv .venv-yt-dlp && . .venv-yt-dlp/bin/activate && \
+#     python3 devscripts/install_deps.py --include pyinstaller && \
+#     python3 devscripts/make_lazy_extractors.py && \
+#     python3 -m bundle.pyinstaller && \
+#     cp 'dist/yt-dlp_linux' "${TOOLS_DIR}/bin/yt-dlp"
+
+# yt-dlp standalone
+
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
+        yt_dlp_url='https://github.com/yt-dlp/yt-dlp/releases/download/2025.02.19/yt-dlp_linux'; \
+    else \
+        yt_dlp_url='https://github.com/yt-dlp/yt-dlp/releases/download/2025.02.19/yt-dlp_linux_aarch64'; \
+    fi && \
+    curl -L "${yt_dlp_url}" -o "${TOOLS_DIR}/bin/yt-dlp" && \
+    chmod u+x "${TOOLS_DIR}/bin/yt-dlp"
 
 # N_m3u8DL-RE binary
 RUN if [ "$(uname -m)" = 'x86_64' ]; then \
@@ -87,6 +98,7 @@ RUN rm ${TOOLS_DIR}/bin/README.* && rm ${TOOLS_DIR}/bin/*.txt
 FROM debian:bookworm-slim AS runner
 
 ARG TOOLS_DIR
+ARG CONFIG_DIR
 
 RUN apt update && \
     apt install \
@@ -97,23 +109,22 @@ RUN apt update && \
         'ca-certificates' 'curl' 'git' 'libfuse2' 'libicu72'
 
 RUN mkdir -p "${TOOLS_DIR}/bin"
+RUN mkdir -p "${CONFIG_DIR}"
+
 COPY --from='builder' "${TOOLS_DIR}" "${TOOLS_DIR}"
 
 # git - How to shallow clone a specific commit with depth 1? - Stack Overflow
 #   https://stackoverflow.com/a/43136160
-RUN mkdir '/SL-plugins' && \
-    git -C '/SL-plugins' init && \
-    git -C '/SL-plugins' remote add 'origin' 'https://github.com/pmrowla/streamlink-plugins.git' && \
-    git -C '/SL-plugins' fetch --depth=1 'origin' 'fa794c0bd23a6439be9ec313ed71b4050339c752' && \
-    git -C '/SL-plugins' switch --detach 'FETCH_HEAD'
+RUN mkdir "${CONFIG_DIR}/SL-plugins" && \
+    git -C "${CONFIG_DIR}/SL-plugins" init && \
+    git -C "${CONFIG_DIR}/SL-plugins" remote add 'origin' 'https://github.com/pmrowla/streamlink-plugins.git' && \
+    git -C "${CONFIG_DIR}/SL-plugins" fetch --depth=1 'origin' 'fa794c0bd23a6439be9ec313ed71b4050339c752' && \
+    git -C "${CONFIG_DIR}/SL-plugins" switch --detach 'FETCH_HEAD'
 
 ENV PATH="${TOOLS_DIR}/ffmpeg/bin:${TOOLS_DIR}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${TOOLS_DIR}/ffmpeg/lib:${LD_LIBRARY_PATH}"
 
-VOLUME [ "/SL-downloads" ]
-
-# for cookies.txt
-RUN mkdir '/YTDLP'
+VOLUME [ "/opt/downloads" ]
 
 COPY --chown=0:0 --chmod=700 ./script.sh /script.sh
 
